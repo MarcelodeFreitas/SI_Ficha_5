@@ -1,0 +1,27 @@
+
+FICHA 5 
+
+- agente seller
+- agente custumer
+- 3 containers ou servidores
+- cada servidor vai ter 1 agente seller a aguardar os pedidos dos novos clientes
+- a cada segundo, a cada container, vai ser adicionado um novo buyer
+- são criados 3 servidores praticamente iguais
+
+OBJETIVO
+
+- criar um agente analist que vai ter capacidade de utilizar os 3 diferentes containers
+- a cada 10s vai entrar no container 1 e pedir informação relativamente:
+	- ao lucro total do agente seller
+	- média do lucro obtido
+	- produto mais vendido nesse container
+- dps de obter esta informação passa para o container 2 e por fim para o container 3
+- no final vai apresentar as principais conclusoes
+	- lucro total dos 3 sellers
+	- média do lucro total dos 3 sellers
+	- o produto mais vendido dos 3 sellers
+
+- a cada 10 segundos nasce um novo analist
+	- passa por cada container fazendo print dos dados acima descritos
+	- dps faz o print final
+	- morre
