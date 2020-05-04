@@ -63,74 +63,91 @@ public class Seller extends Agent {
 		public void action() {
 			ACLMessage msg = receive();
 			// RESPONDER AO ANALYST
-			if (msg != null && msg.getPerformative() == ACLMessage.REQUEST && msg.getSender().getLocalName() == "Analyst") {
-				try {
-					ACLMessage resp = msg.createReply();
-					resp.setPerformative(ACLMessage.INFORM);
-					float lucro_seller = aValor * aVendido + bValor * bVendido + cValor * cVendido + dValor * dVendido;
-					float media_seller = lucro_seller/nr_clientes;
-					int freq_produto_seller = Math.max(Math.max(aVendido, bVendido), Math.max(cVendido, dVendido));
-					String produto_seller = null;
-					if (freq_produto_seller == aVendido) {
-						produto_seller = "A";
+			if (msg != null && msg.getPerformative() == ACLMessage.REQUEST) {
+				String name = msg.getSender().getLocalName();
+				ACLMessage resp = msg.createReply();
+				if (name == "Analyst") {
+					try {
+						System.out.println("Seller recebeu pedido de Analyst");
+						resp.setPerformative(ACLMessage.INFORM);
+						float lucro_seller = aValor * aVendido + bValor * bVendido + cValor * cVendido + dValor * dVendido;
+						float media_seller = lucro_seller/nr_clientes;
+						int freq_produto_seller = Math.max(Math.max(aVendido, bVendido), Math.max(cVendido, dVendido));
+						String produto_seller = null;
+						if (freq_produto_seller == aVendido) {
+							produto_seller = "A";
+						}
+						if (freq_produto_seller == bVendido) {
+							produto_seller = "B";
+						}
+						if (freq_produto_seller == cVendido) {
+							produto_seller = "C";
+						}
+						if (freq_produto_seller == dVendido) {
+							produto_seller = "D";
+						}
+						System.out.println(lucro_seller);
+						System.out.println(media_seller);
+						System.out.println(freq_produto_seller);
+						System.out.println(produto_seller);
+						message_analyst created_instance = new message_analyst(getAID(), lucro_seller, media_seller, produto_seller, freq_produto_seller);
+						resp.setContentObject(created_instance);
+						
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
 					}
-					if (freq_produto_seller == bVendido) {
-						produto_seller = "B";
-					}
-					if (freq_produto_seller == cVendido) {
-						produto_seller = "C";
-					}
-					if (freq_produto_seller == dVendido) {
-						produto_seller = "D";
-					}
-					message_analyst created_instance = new message_analyst(getAID(), lucro_seller, media_seller, produto_seller, freq_produto_seller);
-					resp.setContentObject(created_instance);
-					
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					send(resp);
+				} else {
+					System.out.println("___________________");
 				}
 			}
 			// RESPONDER AOS CLIENTES
-			if (msg != null && msg.getPerformative() == ACLMessage.REQUEST && msg.getSender().getLocalName()!= "Analyst") { // receber pedidos de requisição
+			if (msg != null && msg.getPerformative() == ACLMessage.REQUEST ) { // receber pedidos de requisição
 				nr_clientes = nr_clientes + 1;
+
+				String name = msg.getSender().getLocalName();
+				
 				String clienteP = msg.getSender().getLocalName();
 				ACLMessage resp = msg.createReply();
 				String produtoPedido = msg.getContent();
-				if (products.contains(produtoPedido)) {
-					if (produtoPedido.equals("A")) {
-						aVendido++;
-						System.out.println(getLocalName() + ": produto A requisitado por " + clienteP);
-						resp.setContent("A");
-						resp.setPerformative(ACLMessage.CONFIRM);
-					} else if (produtoPedido.equals("B")) {
-						bVendido++;
-						System.out.println(getLocalName() + ": produto B requisitado por " + clienteP);
-						resp.setContent("B");
-						resp.setPerformative(ACLMessage.CONFIRM);
-					} else if (produtoPedido.equals("C")) {
-						cVendido++;
-						System.out.println(getLocalName() + ": produto C requisitado por " + clienteP);
-						resp.setContent("C");
-						resp.setPerformative(ACLMessage.CONFIRM);
-					} else if (produtoPedido.equals("D")) {
-						dVendido++;
-						System.out.println(getLocalName() + ": produto D requisitado por " + clienteP);
-						resp.setContent("D");
-						resp.setPerformative(ACLMessage.CONFIRM);
+				if (name != "Analyst") {
+					if (products.contains(produtoPedido)) {
+						if (produtoPedido.equals("A")) {
+							aVendido++;
+							System.out.println(getLocalName() + ": produto A requisitado por " + clienteP);
+							resp.setContent("A");
+							resp.setPerformative(ACLMessage.CONFIRM);
+						} else if (produtoPedido.equals("B")) {
+							bVendido++;
+							System.out.println(getLocalName() + ": produto B requisitado por " + clienteP);
+							resp.setContent("B");
+							resp.setPerformative(ACLMessage.CONFIRM);
+						} else if (produtoPedido.equals("C")) {
+							cVendido++;
+							System.out.println(getLocalName() + ": produto C requisitado por " + clienteP);
+							resp.setContent("C");
+							resp.setPerformative(ACLMessage.CONFIRM);
+						} else if (produtoPedido.equals("D")) {
+							dVendido++;
+							System.out.println(getLocalName() + ": produto D requisitado por " + clienteP);
+							resp.setContent("D");
+							resp.setPerformative(ACLMessage.CONFIRM);
+						} else {
+							System.out.println(getLocalName() + ": produto " + produtoPedido + " pedido por " + clienteP + " não disponível");
+							resp.setContent(produtoPedido);
+							resp.setPerformative(ACLMessage.REFUSE);
+						}
 					} else {
-						System.out.println(getLocalName() + ": produto " + produtoPedido + " pedido por " + clienteP + " não disponível");
+						System.out.println(getLocalName() + ": produto " + produtoPedido + " pedido por " + clienteP + " não existe");
 						resp.setContent(produtoPedido);
 						resp.setPerformative(ACLMessage.REFUSE);
 					}
+					send(resp);
 				} else {
-					System.out.println(getLocalName() + ": produto " + produtoPedido + " pedido por " + clienteP + " não existe");
-					resp.setContent(produtoPedido);
-					resp.setPerformative(ACLMessage.REFUSE);
+					System.out.println("o analyst nao pode requsitar produtos");
 				}
-				send(resp);
 			}
-
 			block();
 		}
 	}

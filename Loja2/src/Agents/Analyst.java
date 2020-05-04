@@ -21,7 +21,9 @@ public class Analyst extends Agent {
 	
 	protected void setup() {
 		super.setup();
+		this.addBehaviour(new Requests());
 		this.addBehaviour(new Receiver());
+		
 
 		// Initiate instances and behaviours
 		// Analyst Request information for each seller, in order to determine:
@@ -42,60 +44,103 @@ public class Analyst extends Agent {
 		super.takeDown();
 	}
 	
-	private class Request extends SimpleBehaviour {
+	private class Request extends OneShotBehaviour {
+		
+		private AID seller;
+		
+		public Request(AID sellerAID) {
+			this.seller = sellerAID;
+		}
+		
 		
 		public void action() {
 			
-			AID receiver = new AID();
-			receiver.setLocalName("Seller");
-			ACLMessage mensagem = new ACLMessage(ACLMessage.REQUEST);
-			mensagem.addReceiver(receiver);
+			System.out.println("Analyst start request");
 			
+			ACLMessage mensagem = new ACLMessage(ACLMessage.REQUEST);
+			mensagem.addReceiver(seller);
 			myAgent.send(mensagem);
 				
 			System.out.println("Analyst sent request to seller");
 
 		}
-		
-		public boolean done() {
-			return true;
+	}
+	
+	private class Requests extends OneShotBehaviour{
+		public void action() {
+			// CONTACTING ALL SELLERS
+
+			int numSellers;
+			
+			DFAgentDescription template = new DFAgentDescription();
+			ServiceDescription sd = new ServiceDescription();
+			String Seller_number = getLocalName().substring(getLocalName().length() - 1);
+			String Seller = "Seller" + Seller_number;
+			sd.setType(Seller);
+			template.addServices(sd);
+
+			DFAgentDescription[] result;
+			
+			try {
+				result = DFService.search(myAgent, template);
+				AID[] sellers;
+				sellers = new AID[result.length];
+				numSellers = result.length;
+
+				ParallelBehaviour pb = new ParallelBehaviour(myAgent, ParallelBehaviour.WHEN_ALL) {
+
+					public int onEnd() {
+						System.out.println("All sellers inquired.");
+						return super.onEnd();
+					}
+				};
+				myAgent.addBehaviour(pb);
+
+				for (int i = 0; i < result.length; ++i) {
+					sellers[i] = result[i].getName();
+					System.out.println(sellers[i].getName());
+					pb.addSubBehaviour(new Request(sellers[i]));
+				}
+
+			} catch (FIPAException e) {
+				e.printStackTrace();
+
+			}
 		}
 	}
 	
 	
 	
 	private class Receiver extends CyclicBehaviour {
-		private float lucro_seller;
-		private float media_seller;
-		private String produto_seller;
-		private int freq_produto_seller;
+		private float lucro_seller1, lucro_seller2, lucro_seller3;
+		private float media_seller1, media_seller2, media_seller3;
+		private String produto_seller1, produto_seller2, produto_seller3;
+		private int freq_produto_seller1, freq_produto_seller2, freq_produto_seller3;
 		private AID seller;
 		private AID customer;
 		
 		public void action() {
+			
 			ACLMessage msg = receive();
 			if (msg != null) {
-				if (msg.getPerformative() == ACLMessage.INFORM && msg.getSender().getLocalName() == "Seller[123]") { // como faze rpara apenas dar match com seller 1 2 ou 3?
-					System.out.println("Analyst received data from seller");
+				if (msg.getPerformative() == ACLMessage.INFORM) { // como faze rpara apenas dar match com seller 1 2 ou 3?
+					System.out.println("Analyst received data from seller1");
 					
 					try {
 						message_analyst content = (message_analyst) msg.getContentObject();
-						lucro_seller = content.get_lucro_seller();
-						media_seller = content.get_media_seller();
-						produto_seller = content.get_produto_seller();
-						freq_produto_seller = content.get_freq_produto_seller();
+						lucro_seller1 = content.get_lucro_seller();
+						media_seller1 = content.get_media_seller();
+						produto_seller1 = content.get_produto_seller();
+						freq_produto_seller1 = content.get_freq_produto_seller();
 						
-						System.out.println("lucroooooooooooooooooooooooo" + lucro_seller);
+						System.out.println("lucroooooooooooooooooooooooo" + lucro_seller1);
 						
 					} catch (UnreadableException e1) {
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
 					}
 				}
-		
-			}
-	
+			} 
 		}
 	}
-	
 }
