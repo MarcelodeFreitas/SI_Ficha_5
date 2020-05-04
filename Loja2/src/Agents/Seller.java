@@ -1,5 +1,6 @@
 package Agents;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 import jade.core.Agent;
@@ -11,9 +12,12 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 
+import message_class.message_analyst;
+
 public class Seller extends Agent {
 
 	private ArrayList<String> products;
+	private int nr_clientes;
 	private int aVendido; // número de produtos A vendidos
 	private int bVendido; // número de produtos B vendidos
 	private int cVendido; // número de produtos C vendidos
@@ -58,8 +62,38 @@ public class Seller extends Agent {
 	private class ReceberPedidosEProdutos extends CyclicBehaviour {
 		public void action() {
 			ACLMessage msg = receive();
-			// ADD POSSIBILITY TO RESPOND TO ANALYST INFORMATION REQUESTS!!
-			if (msg != null && msg.getPerformative() == ACLMessage.REQUEST) { // receber pedidos de requisição
+			// RESPONDER AO ANALYST
+			if (msg != null && msg.getPerformative() == ACLMessage.REQUEST && msg.getSender().getLocalName() == "Analyst") {
+				try {
+					ACLMessage resp = msg.createReply();
+					resp.setPerformative(ACLMessage.INFORM);
+					float lucro_seller = aValor * aVendido + bValor * bVendido + cValor * cVendido + dValor * dVendido;
+					float media_seller = lucro_seller/nr_clientes;
+					int freq_produto_seller = Math.max(Math.max(aVendido, bVendido), Math.max(cVendido, dVendido));
+					String produto_seller = null;
+					if (freq_produto_seller == aVendido) {
+						produto_seller = "A";
+					}
+					if (freq_produto_seller == bVendido) {
+						produto_seller = "B";
+					}
+					if (freq_produto_seller == cVendido) {
+						produto_seller = "C";
+					}
+					if (freq_produto_seller == dVendido) {
+						produto_seller = "D";
+					}
+					message_analyst created_instance = new message_analyst(getAID(), lucro_seller, media_seller, produto_seller, freq_produto_seller);
+					resp.setContentObject(created_instance);
+					
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			// RESPONDER AOS CLIENTES
+			if (msg != null && msg.getPerformative() == ACLMessage.REQUEST && msg.getSender().getLocalName()!= "Analyst") { // receber pedidos de requisição
+				nr_clientes = nr_clientes + 1;
 				String clienteP = msg.getSender().getLocalName();
 				ACLMessage resp = msg.createReply();
 				String produtoPedido = msg.getContent();
