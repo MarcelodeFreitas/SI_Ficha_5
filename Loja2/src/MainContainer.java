@@ -7,14 +7,7 @@ import jade.wrapper.AgentController;
 import jade.wrapper.ContainerController;
 import jade.wrapper.StaleProxyException;
 
-/**
- * 
- */
 
-/**
- * @author Filipe Goncalves
- *
- */
 public class MainContainer {
 
 	Runtime rt;
