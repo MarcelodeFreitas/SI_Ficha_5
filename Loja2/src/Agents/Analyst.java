@@ -1,12 +1,14 @@
 package Agents;
 
 import jade.core.Agent;
+import jade.core.ContainerID;
 import jade.core.Location;
 
 import java.io.IOException;
 import java.util.ArrayList;
 
 import jade.core.AID;
+import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.core.behaviours.ParallelBehaviour;
@@ -30,14 +32,15 @@ public class Analyst extends Agent {
 	
 	protected void setup() {
 		super.setup();
+
+		container = 1;
 		
 		lucro = new ArrayList<Float>(3);
 		media_lucro = new ArrayList<Float>(3);
 		produto_mais_vendido = new ArrayList<String>(3);
 		freq_mais_vendido = new ArrayList<Integer>(3);
-
-		container = 1;
 		
+		this.addBehaviour(new Request());
 		this.addBehaviour(new Receiver());
 
 	}
@@ -47,6 +50,36 @@ public class Analyst extends Agent {
 	}
 	
 	
+	private class Request extends Behaviour {
+
+		public void action() {
+			
+		
+			ContainerID destination = new ContainerID();
+			destination.setName("Container" + container);
+			System.out.println("Analyst: Movido para container " + container);
+			doMove(destination);
+
+			ACLMessage msg = new ACLMessage(ACLMessage.REQUEST_WHENEVER);
+			AID reader = new AID("Seller" + container, AID.ISLOCALNAME);
+			msg.addReceiver(reader);
+			msg.setContent("Pedido de Analyst");
+			send(msg);
+
+			System.out.println("Analyst: Mensagem enviada ao container" + container);
+
+			container++;
+
+		}
+
+		public boolean done() {
+			if (container == 4)
+				return true;
+			return false;
+		}
+
+	}
+	
 	private class Receiver extends CyclicBehaviour {
 		
 		public void action() {
@@ -55,9 +88,7 @@ public class Analyst extends Agent {
 			if (msg != null) {
 				if (msg.getPerformative() == ACLMessage.INFORM) { // como faze rpara apenas dar match com seller 1 2 ou 3?
 					
-					System.out.println("_________________________________________________________________");
 					System.out.println("Analyst: Message received from " + msg.getSender().getLocalName() );
-					System.out.println("_________________________________________________________________");
 					
 					try {
 						message_analyst content = (message_analyst) msg.getContentObject();
@@ -78,34 +109,53 @@ public class Analyst extends Agent {
 					
 					// quando o ultimo array list estiver preenchido o tamanho desse array é 3
 					
-					float lucro_final = 0;
-					float media_final = 0;
-					String mais_vendido_final = null;
-					int freq_mais_vendido_final = 0;
+					if (freq_mais_vendido.size() == 3) {
 					
-					
-					for (int i = 0; i < lucro.size(); i++) {
-						lucro_final += lucro.get(i);
-						media_final += media_lucro.get(i);
-						if (freq_mais_vendido_final < freq_mais_vendido.get(i)) {
-							mais_vendido_final = produto_mais_vendido.get(i);
-							freq_mais_vendido_final = freq_mais_vendido.get(i);
+						float lucro_final = 0;
+						float media_final = 0;
+						String mais_vendido_final = null;
+						int freq_mais_vendido_final = 0;
+						
+						
+						for (int i = 0; i < lucro.size(); i++) {
+							lucro_final += lucro.get(i);
+							media_final += media_lucro.get(i);
+							if (freq_mais_vendido_final < freq_mais_vendido.get(i)) {
+								mais_vendido_final = produto_mais_vendido.get(i);
+								freq_mais_vendido_final = freq_mais_vendido.get(i);
+							}
+							System.out.println("________________________Container"+(i + 1)+"________________________________");
+							System.out.println("Lucro: " + lucro.get(i));
+							System.out.println("Média do Lucro: " + media_lucro.get(i));
+							System.out.println("Produto mais vendido: " + produto_mais_vendido.get(i) + " -> " + freq_mais_vendido.get(i));
+							
 						}
-						System.out.println("________________Container"+(i + 1)+"________________");
-						System.out.println("Lucro: " + lucro.get(i));
-						System.out.println("Média do Lucro: " + media_lucro.get(i));
-						System.out.println("Produto mais vendido: " + produto_mais_vendido.get(i) + "->" + freq_mais_vendido.get(i));
-						System.out.println("__________________________________________");
+						
+						System.out.println("_____________________Considerações Finais________________________");
+						System.out.println("Lucro Total: " + lucro_final);
+						System.out.println("Média do Lucro: " + (media_final/3));
+						System.out.println("Produto mais vendido: " + mais_vendido_final + " -> " + freq_mais_vendido_final);
+						System.out.println("_________________________________________________________________");
+						
+						doDelete();
+					
 					}
 					
-					System.out.println("________________Considerações Finais________________");
-					System.out.println("Lucro Total: " + lucro_final);
-					System.out.println("Média do Lucro: " + (media_final/3));
-					System.out.println("Produto mais vendido: " + mais_vendido_final + "->" + freq_mais_vendido_final);
-					System.out.println("__________________________________________");
-					
-				}
+				} else {
+					block();
+					};
 			} 
 		}
 	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 }

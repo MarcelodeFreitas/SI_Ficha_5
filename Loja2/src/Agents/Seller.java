@@ -63,11 +63,11 @@ public class Seller extends Agent {
 		public void action() {
 			ACLMessage msg = receive();
 			// RESPONDER AO ANALYST
-			if (msg != null && msg.getSender().getName() == "Analyst" &&  msg.getPerformative() == ACLMessage.REQUEST) {
+			if (msg != null && msg.getPerformative() == ACLMessage.REQUEST_WHENEVER) {
 				String name = msg.getSender().getLocalName();
 				ACLMessage resp = msg.createReply();
 				try {
-					System.out.println("Seller recebeu pedido de Analyst");
+					System.out.println("Seller: recebeu pedido de Analyst");
 					resp.setPerformative(ACLMessage.INFORM);
 					float lucro_seller = aValor * aVendido + bValor * bVendido + cValor * cVendido + dValor * dVendido;
 					float media_seller = lucro_seller/nr_clientes;
@@ -85,37 +85,32 @@ public class Seller extends Agent {
 					if (freq_produto_seller == dVendido) {
 						produto_seller = "D";
 					}
-					System.out.println(lucro_seller);
-					System.out.println(media_seller);
-					System.out.println(freq_produto_seller);
-					System.out.println(produto_seller);
 					message_analyst created_instance = new message_analyst(getAID(), lucro_seller, media_seller, produto_seller, freq_produto_seller);
 					resp.setContentObject(created_instance);
 					
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 				send(resp);
+				System.out.println("Seller: respondeu ao pedido do Analyst");
 			}
 				
 			// RESPONDER AOS CLIENTES
-			if (msg != null && msg.getSender().getName() != "Analyst" && msg.getPerformative() == ACLMessage.REQUEST ) { // receber pedidos de requisição
-				nr_clientes = nr_clientes + 1;
+			if (msg != null &&  msg.getPerformative() == ACLMessage.REQUEST ) { // receber pedidos de requisição
 
-				String name = msg.getSender().getLocalName();
-				
 				String clienteP = msg.getSender().getLocalName();
 				ACLMessage resp = msg.createReply();
 				String produtoPedido = msg.getContent();
 				if (products.contains(produtoPedido)) {
 					if (produtoPedido.equals("A")) {
 						aVendido++;
+						nr_clientes++;
 						System.out.println(getLocalName() + ": produto A requisitado por " + clienteP);
 						resp.setContent("A");
 						resp.setPerformative(ACLMessage.CONFIRM);
 					} else if (produtoPedido.equals("B")) {
 						bVendido++;
+						nr_clientes++;
 						System.out.println(getLocalName() + ": produto B requisitado por " + clienteP);
 						resp.setContent("B");
 						resp.setPerformative(ACLMessage.CONFIRM);
@@ -126,6 +121,7 @@ public class Seller extends Agent {
 						resp.setPerformative(ACLMessage.CONFIRM);
 					} else if (produtoPedido.equals("D")) {
 						dVendido++;
+						nr_clientes++;
 						System.out.println(getLocalName() + ": produto D requisitado por " + clienteP);
 						resp.setContent("D");
 						resp.setPerformative(ACLMessage.CONFIRM);
